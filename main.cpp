@@ -48,6 +48,7 @@ public:
         catty_buttons[2].load("C:/Users/39036/Downloads/小猫按钮-removebg-preview.png");
         catty_buttons[3].load("C:/Users/39036/Downloads/小猫按钮-removebg-preview.png");
         catty_buttons[4].load("C:/Users/39036/Downloads/小猫按钮-removebg-preview.png");
+        catty_buttons[5].load("C:/Users/39036/Downloads/小猫按钮-removebg-preview.png");
         description1.load("C:/Users/39036/Downloads/问号-removebg-preview.png");
         description1 = description1.scaled(100,100);
         desc_paper.load("C:/Users/39036/Downloads/说明页面1-removebg-preview__1_-removebg-preview.png");
@@ -57,6 +58,54 @@ public:
         curtain1 = curtain1.scaled(725,500);
         curtainopen.load("C:/Users/39036/Downloads/chuanglianopen-removebg-preview.png");
         curtainopen = curtainopen.scaled(725,500);
+        flower.load("C:/Users/39036/Downloads/flower4-shadow-removebg-preview.png");
+        flower = flower.scaled(800,400);
+        flower_night.load("C:/Users/39036/Downloads/flower-night-removebg-preview.png");
+        flower_night = flower_night.scaled(800,400);
+        cattyhat1.load("C:/Users/39036/Downloads/cat-rabbithat-removebg-preview.png");
+        cattyhat2.load("C:/Users/39036/Downloads/cat-dinosaurhat-removebg-preview.png");
+        cattyhat3.load("C:/Users/39036/Downloads/cat-doghat-removebg-preview.png");
+        cattyhat1 = cattyhat1.scaled(catty.width(),catty.height());
+        cattyhat2 = cattyhat2.scaled(catty.width(),catty.height());
+        cattyhat3 = cattyhat3.scaled(catty.width(),catty.height());
+        is_bought_hat[0] = true;
+        is_bought_hat[1] = true;
+        is_bought_hat[2] = false;
+        is_bought_hat[3] = true;
+        background_wb.load("C:/Users/39036/Downloads/background_wb.png");
+        stone.load("C:/Users/39036/Downloads/stone_w-removebg-preview.png");
+        sci.load("C:/Users/39036/Downloads/sci_w-removebg-preview.png");
+        bu.load("C:/Users/39036/Downloads/bu_w-removebg-preview.png");
+        stone1.load("C:/Users/39036/Downloads/stone_w-removebg-preview.png");
+        sci1.load("C:/Users/39036/Downloads/sci_w-removebg-preview.png");
+        bu1.load("C:/Users/39036/Downloads/bu_w-removebg-preview.png");
+        stone2.load("C:/Users/39036/Downloads/stone_w-removebg-preview.png");
+        sci2.load("C:/Users/39036/Downloads/sci_w-removebg-preview.png");
+        bu2.load("C:/Users/39036/Downloads/bu_w-removebg-preview.png");
+        stone2 = stone2.scaled(500,500);
+        sci2 = sci2.scaled(500,500);
+        bu2 = bu2.scaled(500,500);
+        seqNumbers.resize(8);
+        seqCurrentIndex = 0;
+        seqDisplaying = false;
+        seqPlaying = false;
+        seqError = false;
+        seqWin = false;
+        seqDisplayStep = 0;
+        seqCurrentDisplayNumber = -1;
+        seqDisplayTimer.setSingleShot(true);
+        connect(&seqDisplayTimer, &QTimer::timeout, this, &Background::onSeqDisplayTimeout);
+        puzzleActive = false;
+        puzzleWin = false;
+        stopGameActive = false;
+        stopGameWin = false;
+        stopGameFail = false;
+        pointerAngle = 0.0;
+        pointerDirection = 1;
+        minAngle = -30.0;
+        maxAngle = 30.0;
+        stopGameTimer.setSingleShot(false);  // 循环定时器
+        connect(&stopGameTimer, &QTimer::timeout, this, &Background::updatePointer);
     }
 private slots:
     void ResetCatty()
@@ -76,6 +125,75 @@ private slots:
         Coin_not_enough = false;
         update();
     }
+private slots:
+    void startGame3()
+    {
+        seqDisplaying = true;
+        seqPlaying = false;
+        seqError = false;
+        seqWin = false;
+        seqCurrentIndex = 0;
+        seqDisplayStep = 0;
+        seqNumbers.clear();
+        for (int i = 0; i < 8; ++i)
+            seqNumbers.append(QRandomGenerator::global()->bounded(0, 10));
+        seqCurrentDisplayNumber = seqNumbers[0];
+        seqDisplayTimer.start(2000);
+        update();
+    }
+private slots:
+    void onSeqDisplayTimeout()
+    {
+        seqDisplayStep++;
+        if (seqDisplayStep < 8) {
+            seqCurrentDisplayNumber = seqNumbers[seqDisplayStep];
+            seqDisplayTimer.start(2000);
+        } else {
+            seqDisplaying = false;
+            seqPlaying = true;
+            seqCurrentDisplayNumber = -1;
+            seqCurrentIndex = 0;
+            update();
+        }
+        update();
+    }
+private slots:
+    void updatePointer()
+    {
+        if (!stopGameActive) return;
+        pointerAngle += pointerDirection * 15.0;
+        update();
+    }
+private slots:
+    void stopAndCheck()
+    {
+        if (!stopGameActive) return;
+        stopGameTimer.stop();
+
+        double angle = fmod(pointerAngle, 360.0);
+        if (angle < 0) angle += 360.0;
+
+        bool hit = (angle >= 150.0 && angle <= 210.0);
+
+        if (hit) {
+            stopGameWin = true;
+            coin += 75;
+            Love++;
+        } else {
+            stopGameFail = true;
+        }
+        stopGameActive = false;
+        update();
+
+        QTimer::singleShot(1500, this, [this]() {
+            enter_quiz = false;
+            have_selected = true;
+            stopGameWin = false;
+            stopGameFail = false;
+            stopGameActive = false;
+            update();
+        });
+    }
 
 private:
     QPixmap background;
@@ -83,6 +201,9 @@ private:
     QPixmap catty;
     QPixmap cattymeow;
     QPixmap cattysleep;
+    QPixmap cattyhat1;
+    QPixmap cattyhat2;
+    QPixmap cattyhat3;
     bool ismeow;
     QTimer meowTimer;
     QPixmap money;
@@ -91,6 +212,7 @@ private:
     int Love = 0;
     bool enter_quiz = false;
     bool enter_shop = false;
+    bool enter_decoration = false;
     bool is_night = false;
     QTimer nightTimer;
     QPixmap shop;
@@ -102,6 +224,18 @@ private:
     QPixmap mystery_key;
     QPixmap curtain1;
     QPixmap curtainopen;
+    QPixmap flower;
+    QPixmap flower_night;
+    QPixmap background_wb;
+    QPixmap stone;
+    QPixmap sci;
+    QPixmap bu;
+    QPixmap stone1;
+    QPixmap sci1;
+    QPixmap bu1;
+    QPixmap stone2;
+    QPixmap sci2;
+    QPixmap bu2;
     bool bought_1 = false;
     bool bought_2 = false;
     bool bought_3 = false;
@@ -111,6 +245,18 @@ private:
     bool Coin_not_enough = false;
     bool is_bought_curtain = true;
     bool is_open_curtain = false;
+    bool is_bought_flower = true;
+    QVector<int> seqNumbers;
+    int seqCurrentIndex;
+    bool seqDisplaying;
+    bool seqPlaying;
+    bool seqError;
+    bool seqWin;
+    QTimer seqDisplayTimer;
+    int seqDisplayStep;
+    int seqCurrentDisplayNumber;
+    int hat = 0;
+    bool is_bought_hat[4];
     QTimer Coin_not_enough_Timer;
     bool is_Dragging_water_bowl = false;
     QPoint posof_water_bowl;
@@ -130,6 +276,15 @@ private:
     QPixmap quiz_background;
     bool have_selected = false;
     int rng = QRandomGenerator::global()->bounded(1,6);
+    int gameclass = QRandomGenerator::global()->bounded(1,6);
+    int temprng = QRandomGenerator::global()->bounded(1,4);
+    QTimer stopGameTimer;
+    bool stopGameActive;
+    bool stopGameWin;
+    bool stopGameFail;
+    double pointerAngle;
+    int pointerDirection;
+    double minAngle, maxAngle;
     bool ended = false;
     QPixmap catty_buttons[100];
     QPixmap description1;
@@ -137,11 +292,45 @@ private:
     QPixmap desc_paper;
     QPixmap close_page;
     bool flag = false;
+    int select2 = 0;
+    bool waitingForResult = false;
+    int playerChoice = 0;
+    int computerChoice = 0;
+    int puzzle[3][3];
+    int emptyRow, emptyCol;
+    bool puzzleActive;
+    bool puzzleWin;
+    void initPuzzle() {
+        int nums[9] = {1,2,3,4,5,6,7,8,0};
+        for (int step = 0; step < 100; ++step) {
+            int i = QRandomGenerator::global()->bounded(9);
+            int j = QRandomGenerator::global()->bounded(9);
+            int temp = nums[i];
+            nums[i] = nums[j];
+            nums[j] = temp;
+        }
+        for (int r = 0; r < 3; ++r) {
+            for (int c = 0; c < 3; ++c) {
+                puzzle[r][c] = nums[r*3 + c];
+                if (puzzle[r][c] == 0) {
+                    emptyRow = r;
+                    emptyCol = c;
+                }
+            }
+        }
+    }
     bool isPointOnCatty(QPoint& pos)
     {
-        QRect isoncatty (1750,825,catty.width(),catty.height());
-        if (!isoncatty.contains(pos)) return false;
-        return true;
+        QRect isoncatty[4];
+        isoncatty[0] = QRect(1750,825,catty.width(),catty.height());
+        isoncatty[1] = QRect(1750,825,cattyhat1.width(),cattyhat1.height());
+        isoncatty[2] = QRect(1750,825,cattyhat2.width(),cattyhat2.height());
+        isoncatty[3] = QRect(1750,825,cattyhat3.width(),cattyhat3.height());
+        if (isoncatty[hat].contains(pos))
+        {
+            return true;
+        }
+        return false;
     }
 
     bool isPointOnCurtain(QPoint& pos)
@@ -165,6 +354,13 @@ private:
         return false;
     }
 
+    bool isPointOnDecoration(QPoint& pos)
+    {
+        QRect isondec(2160,650,300,100);
+        if (isondec.contains(pos)) return true;
+        return false;
+    }
+
     bool isPointOnBed(QPoint& pos)
     {
         QRect isonexit (2160,500,300,100);
@@ -179,52 +375,79 @@ private:
         return false;
     }
 
-        bool isPointOnShop1(QPoint& pos)
-        {
-            QRect isonexit (96,167,750,420);
-            if (isonexit.contains(pos) && enter_shop) return true;
-            return false;
+    bool isPointOnShop1(QPoint& pos) {
+        if (!bought_1 && enter_shop) {
+            QRect rect(168, 108, water_bowl.width(), water_bowl.height());
+            return rect.contains(pos);
         }
+        return false;
+    }
 
-        bool isPointOnShop2(QPoint& pos)
-        {
-            QRect isonexit (860,167,750,420);
-            if (isonexit.contains(pos) && enter_shop) return true;
-            return false;
+    bool isPointOnShop2(QPoint& pos) {
+        if (!bought_2 && enter_shop) {
+            QRect rect(1008, 108, scratch_board.width(), scratch_board.height());
+            return rect.contains(pos);
         }
+        return false;
+    }
 
-        bool isPointOnShop3(QPoint& pos)
-        {
-            QRect isonexit (1660,167,750,420);
-            if (isonexit.contains(pos) && enter_shop) return true;
-            return false;
+    bool isPointOnShop3(QPoint& pos) {
+        if (!bought_3 && enter_shop) {
+            QRect rect(1848, 108, Catnip.width(), Catnip.height());
+            return rect.contains(pos);
         }
+        return false;
+    }
 
-        bool isPointOnShop4(QPoint& pos)
-        {
-            QRect isonexit (96,737,750,420);
-            if (isonexit.contains(pos) && enter_shop) return true;
-            return false;
+    bool isPointOnShop4(QPoint& pos) {
+        if (!bought_4 && enter_shop) {
+            QRect rect(168, 608, ball.width(), ball.height());
+            return rect.contains(pos);
         }
+        return false;
+    }
 
-        bool isPointOnShop5(QPoint& pos)
-        {
-            QRect isonexit (860,737,750,420);
-            if (isonexit.contains(pos) && enter_shop) return true;
-            return false;
+    bool isPointOnShop5(QPoint& pos) {
+        if (!bought_5 && enter_shop) {
+            QRect rect(908, 688, iPad.width(), iPad.height());
+            return rect.contains(pos);
         }
+        return false;
+    }
 
-        bool isPointOnShop6(QPoint& pos)
-        {
-            QRect isonexit (1660,737,750,420);
-            if (isonexit.contains(pos) && enter_shop) return true;
-            return false;
+    bool isPointOnShop6(QPoint& pos) {
+        if (!bought_6 && enter_shop) {
+            QRect rect(1848, 588, mystery_key.width(), mystery_key.height());
+            return rect.contains(pos);
         }
+        return false;
+    }
 
         bool isExitShop(QPoint& pos)
         {
             QRect isexitshop = rect();
             if (isexitshop.contains(pos) && enter_shop) return true;
+            return false;
+        }
+
+        bool isPointOnStone(QPoint &pos)
+        {
+            QRect isonstone (300,750,stone.width(),stone.height());
+            if (isonstone.contains(pos) && gameclass == 2 && enter_quiz) return true;
+            return false;
+        }
+
+        bool isPointOnsci(QPoint &pos)
+        {
+            QRect isonsci (600,750,sci.width(),sci.height());
+            if (isonsci.contains(pos) && gameclass == 2 && enter_quiz) return true;
+            return false;
+        }
+
+        bool isPointOnbu(QPoint &pos)
+        {
+            QRect isonbu (900,750,bu.width(),bu.height());
+            if (isonbu.contains(pos) && gameclass == 2 && enter_quiz) return true;
             return false;
         }
 
@@ -378,7 +601,7 @@ protected:
             painter.drawText(pointer_text8,"你能在最短多少回合内获胜呢？来挑战一下吧！");
             return ;
         }
-        if (!enter_quiz && !enter_shop)
+        if (!enter_quiz && !enter_shop && !enter_decoration)
         {
             Q_UNUSED(event);
             painter.drawPixmap(rect(),background);
@@ -386,19 +609,25 @@ protected:
             if (!is_night)
             {
                 painter.drawPixmap(rect(),background);
-                if (!ismeow)
+                if (is_bought_flower)
                 {
-                    painter.drawPixmap(pointer_catty,catty);
+                    QPoint flower_pointer(600,700);
+                    painter.drawPixmap(flower_pointer,flower);
                 }
-                else
-                {
-                    painter.drawPixmap(pointer_catty,cattymeow);
-                }
+                if (hat == 0) painter.drawPixmap(pointer_catty,catty);
+                else if (hat == 1) painter.drawPixmap(pointer_catty,cattyhat1);
+                else if (hat == 2) painter.drawPixmap(pointer_catty,cattyhat2);
+                else if (hat == 3) painter.drawPixmap(pointer_catty,cattyhat3);
             }
             else
             {
                 painter.drawPixmap(rect(),background_night);
                 painter.drawPixmap(pointer_catty,cattysleep);
+                if (is_bought_flower)
+                {
+                    QPoint flower_pointer(600,700);
+                    painter.drawPixmap(flower_pointer,flower_night);
+                }
 
             }
             if (is_bought_curtain)
@@ -448,10 +677,9 @@ protected:
 
             QFontMetrics fm(font1);
 
-            // 在背景框上绘制文本（垂直居中）
-            int coin_textX = 220;   // 左内边距10像素
-            int coin_textY = 160; // 垂直居中
-            painter.drawText(coin_textX, coin_textY, coin_text); //此处使用ai确定长度及写金币数量代码
+            int coin_textX = 220;
+            int coin_textY = 160;
+            painter.drawText(coin_textX, coin_textY, coin_text);
 
             int Day_textX = 110;
             int Day_textY = 280;
@@ -465,24 +693,24 @@ protected:
             QString shop = QString("商店");
             QString exit = QString("退出");
             QString bed = QString("睡觉");
-//            QPen pen_button;
-//            pen_button.setWidth(10);
-//            pen_button.setColor(Qt::black);
-//            painter.setPen(pen_button);
+            QString decoration = QString("装饰品");
             QPoint pointer_buttons1(2060,-150);
             QPoint pointer_buttons2(2060,0);
             QPoint pointer_buttons3(2060,150);
             QPoint pointer_buttons4(2060,300);
+            QPoint pointer_buttons5(2060,450);
             painter.drawPixmap(pointer_buttons1,catty_buttons[1]);
             painter.drawPixmap(pointer_buttons2,catty_buttons[2]);
             painter.drawPixmap(pointer_buttons3,catty_buttons[3]);
             painter.drawPixmap(pointer_buttons4,catty_buttons[4]);
+            painter.drawPixmap(pointer_buttons5,catty_buttons[5]);
             QPen pen_text;
             painter.setPen(pen_text);
             painter.drawText(2250,120,quiz);
             painter.drawText(2250,270,shop);
             painter.drawText(2250,420,exit);
             painter.drawText(2250,570,bed);
+            painter.drawText(2220,720,decoration);
         }
         if (enter_shop)
         {
@@ -559,81 +787,267 @@ protected:
         else if (enter_quiz)
         {
             painter.drawPixmap(rect(),background);
-            QPoint pointer_quiz(320,180);
-            quiz_background = quiz_background.scaled(1920,1080);
-            painter.drawPixmap(pointer_quiz,quiz_background);
-            QPoint tg(426,304);
-            QPoint A(515,539);
-            QPoint B(515,777);
-            QPoint C(515,1013);
-            QPoint s1(700,555);
-            QPoint s2(700,800);
-            QPoint s3(700,1025);
-            if (rng == 1)
+            if (gameclass == 1)
             {
-                QFont font4 = painter.font();
-                font4.setPixelSize(60);
-                painter.setFont(font4);
-                painter.drawText(tg,"猫猫的平均寿命是多少?");
-                painter.drawText(A,"A");
-                painter.drawText(B,"B");
-                painter.drawText(C,"C");
-                painter.drawText(s1,"5-8年");
-                painter.drawText(s2,"12-18年");
-                painter.drawText(s3,"20-25年");
+                QPoint pointer_quiz(320,180);
+                quiz_background = quiz_background.scaled(1920,1080);
+                painter.drawPixmap(pointer_quiz,quiz_background);
+                QPoint tg(426,304);
+                QPoint A(515,539);
+                QPoint B(515,777);
+                QPoint C(515,1013);
+                QPoint s1(700,555);
+                QPoint s2(700,800);
+                QPoint s3(700,1025);
+                if (rng == 1)
+                {
+                    QFont font4 = painter.font();
+                    font4.setPixelSize(60);
+                    painter.setFont(font4);
+                    painter.drawText(tg,"归并排序的最坏时间复杂度是多少?");
+                    painter.drawText(A,"A");
+                    painter.drawText(B,"B");
+                    painter.drawText(C,"C");
+                    painter.drawText(s1,"O(n)");
+                    painter.drawText(s2,"O(nlogn)");
+                    painter.drawText(s3,"O(n²)");
+                }
+                else if (rng == 2)
+                {
+                    QFont font4 = painter.font();
+                    font4.setPixelSize(60);
+                    painter.setFont(font4);
+                    painter.drawText(tg,"dijkstra算法的时间复杂度是多少?");
+                    painter.drawText(A,"A");
+                    painter.drawText(B,"B");
+                    painter.drawText(C,"C");
+                    painter.drawText(s1,"O(nlogn)");
+                    painter.drawText(s2,"O((n+m)logn)");
+                    painter.drawText(s3,"O(mlogn)");
+                }
+                else if (rng == 3)
+                {
+                    QFont font4 = painter.font();
+                    font4.setPixelSize(60);
+                    painter.setFont(font4);
+                    painter.drawText(tg,"BFS一般需要用到哪种数据结构?");
+                    painter.drawText(A,"A");
+                    painter.drawText(B,"B");
+                    painter.drawText(C,"C");
+                    painter.drawText(s1,"栈");
+                    painter.drawText(s2,"二叉树");
+                    painter.drawText(s3,"队列");
+                }
+                else if (rng == 4)
+                {
+                    QFont font4 = painter.font();
+                    font4.setPixelSize(60);
+                    painter.setFont(font4);
+                    painter.drawText(tg,"线段树比起前缀和的显著优势是什么");
+                    painter.drawText(A,"A");
+                    painter.drawText(B,"B");
+                    painter.drawText(C,"C");
+                    painter.drawText(s1,"快速区间查询");
+                    painter.drawText(s2,"快速区间排序");
+                    painter.drawText(s3,"快速区间修改");
+                }
+                else if (rng == 5)
+                {
+                    QFont font4 = painter.font();
+                    font4.setPixelSize(60);
+                    painter.setFont(font4);
+                    painter.drawText(tg,"当n超过哪个数量级时，O(nlogn)的算法会TLE?");
+                    painter.drawText(A,"A");
+                    painter.drawText(B,"B");
+                    painter.drawText(C,"C");
+                    painter.drawText(s1,"10^5");
+                    painter.drawText(s2,"10^6");
+                    painter.drawText(s3,"10^7");
+                }
             }
-            else if (rng == 2)
+            else if (gameclass == 2)
             {
-                QFont font4 = painter.font();
-                font4.setPixelSize(60);
-                painter.setFont(font4);
-                painter.drawText(tg,"猫猫的孕期有多长?");
-                painter.drawText(A,"A");
-                painter.drawText(B,"B");
-                painter.drawText(C,"C");
-                painter.drawText(s1,"35天");
-                painter.drawText(s2,"65天");
-                painter.drawText(s3,"95天");
+                QPoint pointer_backgroundbw (320,180);
+                painter.drawPixmap(pointer_backgroundbw, background_wb.scaled(1920,1080));
+
+                stone.scaled(120,120); painter.drawPixmap(300,750, stone);
+                sci.scaled(120,120);   painter.drawPixmap(600,750, sci);
+                bu.scaled(120,120);    painter.drawPixmap(900,750, bu);
+
+                QFont titleFont = painter.font();
+                titleFont.setPixelSize(80);
+                titleFont.setBold(true);
+                painter.setFont(titleFont);
+                painter.setPen(Qt::black);
+                painter.drawText(1110, 320, "石头剪刀布");
+
+                QFont subFont = painter.font();
+                subFont.setPixelSize(40);
+                painter.setFont(subFont);
+                painter.drawText(1060, 400, "选择你的手势与小猫对决");
+
+                if (playerChoice == 1)
+                    painter.drawPixmap(400,400, stone1.scaled(500,500));
+                else if (playerChoice == 2)
+                    painter.drawPixmap(400,400, sci1.scaled(500,500));
+                else if (playerChoice == 3)
+                    painter.drawPixmap(400,400, bu1.scaled(500,500));
+                if (computerChoice == 1)
+                    painter.drawPixmap(1600,400, stone2);
+                else if (computerChoice == 2)
+                    painter.drawPixmap(1600,400, sci2);
+                else if (computerChoice == 3)
+                    painter.drawPixmap(1600,400, bu2);
             }
-            else if (rng == 3)
+            else if (gameclass == 3)
             {
-                QFont font4 = painter.font();
-                font4.setPixelSize(60);
-                painter.setFont(font4);
-                painter.drawText(tg,"猫猫的正常体温是多少?");
-                painter.drawText(A,"A");
-                painter.drawText(B,"B");
-                painter.drawText(C,"C");
-                painter.drawText(s1,"36.5度");
-                painter.drawText(s2,"37.5度");
-                painter.drawText(s3,"38.5度");
+                QPoint pointer_backgroundbw (320,180);
+                painter.drawPixmap(pointer_backgroundbw, background_wb.scaled(1920,1080));
+
+                QFont titleFont = painter.font();
+                titleFont.setPixelSize(50);
+                titleFont.setBold(true);
+                painter.setFont(titleFont);
+                painter.setPen(Qt::black);
+                painter.drawText(1100, 320, "顺序记忆");
+                painter.setFont(QFont("Arial", 30));
+                painter.drawText(750, 380, "记住右侧数字顺序，然后依次点击左侧数字");
+
+                if (seqPlaying && !seqError && !seqWin) {
+                    int leftStartX = 500, leftStartY = 600;
+                    int btnW = 100, btnH = 80;
+                    int spacingX = 30, spacingY = 30;
+                    int cols = 5;
+                    for (int i = 0; i <= 9; ++i) {
+                        int row = i / cols;
+                        int col = i % cols;
+                        int x = leftStartX + col * (btnW + spacingX);
+                        int y = leftStartY + row * (btnH + spacingY);
+                        painter.drawRect(x, y, btnW, btnH);
+                        painter.setFont(QFont("Arial", 40));
+                        painter.drawText(QRect(x, y, btnW, btnH), Qt::AlignCenter, QString::number(i));
+                    }
+                }
+
+                if (seqDisplaying) {
+                    // 展示阶段：显示大数字
+                    painter.setFont(QFont("Arial", 200));
+                    painter.setPen(Qt::blue);
+                    painter.drawText(1500, 800, QString::number(seqCurrentDisplayNumber));
+                    painter.setFont(QFont("Arial", 30));
+                    painter.drawText(1500, 500, QString("记住数字 %1 / 8").arg(seqDisplayStep + 1));
+                } else if (seqPlaying && !seqError && !seqWin) {
+                    // 点击阶段：显示当前需要点击第几个数字（不显示具体数字，考验记忆）
+                    painter.setFont(QFont("Arial", 50));
+                    painter.setPen(Qt::black);
+                    painter.drawText(1500, 800, QString("点击第 %1 个数字").arg(seqCurrentIndex + 1));
+                    painter.setFont(QFont("Arial", 30));
+                    painter.drawText(1500, 500, "（记住刚才的数字）");
+                }
+
+                if (seqError) {
+                    painter.setFont(QFont("Arial", 120));
+                    painter.setPen(Qt::red);
+                    painter.drawText(width() / 2 - 80, height() / 2, "X");
+                } else if (seqWin) {
+                    painter.setFont(QFont("Arial", 100));
+                    painter.setPen(Qt::green);
+                    painter.drawText(width() / 2 - 120, height() / 2, "WIN");
+                }
             }
-            else if (rng == 4)
+            else if (gameclass == 4)
             {
-                QFont font4 = painter.font();
-                font4.setPixelSize(60);
-                painter.setFont(font4);
-                painter.drawText(tg,"猫猫绝育的最佳年龄是多少?");
-                painter.drawText(A,"A");
-                painter.drawText(B,"B");
-                painter.drawText(C,"C");
-                painter.drawText(s1,"约3个月时");
-                painter.drawText(s2,"约5个月时");
-                painter.drawText(s3,"约7个月时");
+                QPoint pointer_backgroundbw (320,180);
+                painter.drawPixmap(pointer_backgroundbw, background_wb.scaled(1920,1080));
+
+                QFont titleFont = painter.font();
+                titleFont.setPixelSize(60);
+                titleFont.setBold(true);
+                painter.setFont(titleFont);
+                painter.setPen(Qt::black);
+                painter.drawText(1100, 320, "数字华容道");
+                painter.setFont(QFont("Arial", 30));
+                painter.drawText(900, 400, "点击数字移动到空格，拼回 1-8");
+
+                int startX = 900, startY = 500;
+                int cellW = 160, cellH = 160;
+                int spacing = 10;
+                for (int r = 0; r < 3; ++r) {
+                    for (int c = 0; c < 3; ++c) {
+                        int x = startX + c * (cellW + spacing);
+                        int y = startY + r * (cellH + spacing);
+                        painter.setPen(QPen(Qt::black, 3));
+                        painter.setBrush(QBrush(QColor(240, 240, 240)));
+                        painter.drawRect(x, y, cellW, cellH);
+
+                        int num = puzzle[r][c];
+                        if (num != 0) {
+                            painter.setFont(QFont("Arial", 60));
+                            painter.setPen(Qt::black);
+                            painter.drawText(QRect(x, y, cellW, cellH), Qt::AlignCenter, QString::number(num));
+                        } else {
+                            painter.setBrush(QBrush(QColor(200, 200, 200)));
+                            painter.drawRect(x, y, cellW, cellH);
+                        }
+                    }
+                }
+
+                if (puzzleWin) {
+                    painter.setFont(QFont("Arial", 100));
+                    painter.setPen(Qt::green);
+                    painter.drawText(width() / 2 - 120, height() / 2, "WIN");
+                }
             }
-            else if (rng == 5)
+            else if (gameclass == 5)
             {
-                QFont font4 = painter.font();
-                font4.setPixelSize(60);
-                painter.setFont(font4);
-                painter.drawText(tg,"猫猫的胡须有什么用?");
-                painter.drawText(A,"A");
-                painter.drawText(B,"B");
-                painter.drawText(C,"C");
-                painter.drawText(s1,"测量");
-                painter.drawText(s2,"美观");
-                painter.drawText(s3,"保暖");
+                QPoint pointer_backgroundbw (320,180);
+                painter.drawPixmap(pointer_backgroundbw, background_wb.scaled(1920,1080));
+
+                QFont titleFont = painter.font();
+                titleFont.setPixelSize(60);
+                titleFont.setBold(true);
+                painter.setFont(titleFont);
+                painter.setPen(Qt::black);
+                painter.drawText(1050, 320, "反应停止");
+                painter.setFont(QFont("Arial", 30));
+                painter.drawText(800, 400, "指针进入绿色区域时点击「停止」");
+
+                int centerX = width() / 2;      // 1280
+                int centerY = 800;
+                int radius = 300;
+                painter.setBrush(QBrush(Qt::green));
+                painter.drawPie(centerX - radius, centerY - radius, radius*2, radius*2,
+                                (270 - 30) * 16, 60 * 16);   // 起始角（12点为0°，顺时针）
+                painter.setBrush(QBrush(Qt::red));
+                painter.drawPie(centerX - radius, centerY - radius, radius*2, radius*2,
+                                (270 + 30) * 16, 300 * 16);
+                double rad = pointerAngle * 3.14159 / 180.0;
+                int px = centerX + (int)((radius - 20) * cos(rad - 3.14159/2));
+                int py = centerY + (int)((radius - 20) * sin(rad - 3.14159/2));
+                painter.setBrush(QBrush(Qt::black));
+                painter.drawLine(centerX, centerY, px, py);
+                painter.drawEllipse(centerX - 10, centerY - 10, 20, 20);
+
+                int btnX = 1150, btnY = 1050, btnW = 200, btnH = 80;
+                painter.setBrush(QBrush(QColor(200, 200, 200)));
+                painter.drawRect(btnX, btnY, btnW, btnH);
+                painter.setFont(QFont("Arial", 40));
+                painter.drawText(QRect(btnX, btnY, btnW, btnH), Qt::AlignCenter, "停止");
+
+                if (stopGameWin) {
+                    painter.setFont(QFont("Arial", 100));
+                    painter.setPen(Qt::green);
+                    painter.drawText(width() / 2 - 120, height() / 2 + 100, "WIN");
+                } else if (stopGameFail) {
+                    painter.setFont(QFont("Arial", 100));
+                    painter.setPen(Qt::red);
+                    painter.drawText(width() / 2 - 120, height() / 2 + 100, "X");
+                }
             }
+        }
+        else if (enter_decoration)
+        {
+            painter.drawPixmap(rect(),shop);
         }
     }
     void mousePressEvent(QMouseEvent *event) override
@@ -649,41 +1063,216 @@ protected:
                         update();
                         return;
                     }
-                    else if (isPointOnQuizS1(pos1))
+                    if (gameclass == 1)
                     {
-                        have_selected = true;
-                        enter_quiz = false;
-                        if (rng == 5)
+                        if (isPointOnQuizS1(pos1))
                         {
+                            have_selected = true;
+                            enter_quiz = false;
+                            if (rng == 5)
+                            {
+                                coin += 75;
+                                Love++;
+                            }
+                            update();
+                            return;
+                        }
+                        else if (isPointOnQuizS2(pos1))
+                        {
+                            have_selected = true;
+                            enter_quiz = false;
+                            if (rng == 1 || rng == 2)
+                            {
+                                coin+=75;
+                                Love++;
+                            }
+                            update();
+                            return;
+                        }
+                        else if (isPointOnQuizS3(pos1))
+                        {
+                            have_selected = true;
+                            enter_quiz = false;
+                            if (rng == 3 || rng == 4)
+                            {
+                                coin+=75;
+                                Love++;
+                            }
+                            update();
+                            return;
+                        }
+                    }
+                    else if (gameclass == 2)
+                    {
+                        if (waitingForResult) return;
+
+                        int choice = 0;
+                        if (isPointOnStone(pos1)) choice = 1;
+                        else if (isPointOnsci(pos1)) choice = 2;
+                        else if (isPointOnbu(pos1)) choice = 3;
+                        else return;
+
+                        playerChoice = choice;
+                        computerChoice = QRandomGenerator::global()->bounded(1, 4);
+
+
+                        bool win = false;
+                        if (playerChoice == 1 && computerChoice == 2) win = true;
+                        else if (playerChoice == 2 && computerChoice == 3) win = true;
+                        else if (playerChoice == 3 && computerChoice == 1) win = true;
+
+                        update();
+                        waitingForResult = true;
+
+                        if (win) {
                             coin += 75;
                             Love++;
+                            QTimer::singleShot(1000, this, [this]() {
+                                enter_quiz = false;
+                                have_selected = true;
+                                waitingForResult = false;
+                                playerChoice = 0;
+                                computerChoice = 0;
+                                update();
+                            });
                         }
-                        update();
+                        else if (playerChoice == computerChoice) {
+                            QTimer::singleShot(1000, this, [this]() {
+                                waitingForResult = false;
+                                playerChoice = 0;
+                                computerChoice = 0;
+                                update();
+                            });
+                        }
+                        else {
+                            QTimer::singleShot(1000, this, [this]() {
+                                enter_quiz = false;
+                                have_selected = true;
+                                waitingForResult = false;
+                                playerChoice = 0;
+                                computerChoice = 0;
+                                update();
+                            });
+                        }
                         return;
                     }
-                    else if (isPointOnQuizS2(pos1))
+                    else if(gameclass == 3)
                     {
-                        have_selected = true;
-                        enter_quiz = false;
-                        if (rng == 1 || rng == 2)
-                        {
-                            coin+=75;
-                            Love++;
+                        if (!seqPlaying || seqError || seqWin) return;
+
+                        int leftStartX = 500, leftStartY = 600;
+                        int btnW = 100, btnH = 80;
+                        int spacingX = 30, spacingY = 30;
+                        int cols = 5;
+                        int clickedNum = -1;
+                        for (int i = 0; i <= 9; ++i) {
+                            int row = i / cols;
+                            int col = i % cols;
+                            int x = leftStartX + col * (btnW + spacingX);
+                            int y = leftStartY + row * (btnH + spacingY);
+                            QRect rect(x, y, btnW, btnH);
+                            if (rect.contains(pos1)) {
+                                clickedNum = i;
+                                break;
+                            }
                         }
-                        update();
-                        return;
+                        if (clickedNum == -1) return;
+
+                        if (clickedNum == seqNumbers[seqCurrentIndex]) {
+                            seqCurrentIndex++;
+                            update();
+                            if (seqCurrentIndex == seqNumbers.size()) {
+                                seqWin = true;
+                                seqPlaying = false;
+                                coin += 75;
+                                Love++;
+                                update();
+                                QTimer::singleShot(1000, this, [this]() {
+                                    enter_quiz = false;
+                                    have_selected = true;
+                                    seqWin = false;
+                                    seqPlaying = false;
+                                    update();
+                                });
+                            }
+                        } else {
+                            seqError = true;
+                            seqPlaying = false;
+                            update();
+                            QTimer::singleShot(1000, this, [this]() {
+                                enter_quiz = false;
+                                have_selected = true;
+                                seqError = false;
+                                update();
+                            });
+                        }
                     }
-                    else if (isPointOnQuizS3(pos1))
+                    else if (gameclass == 4)
                     {
-                        have_selected = true;
-                        enter_quiz = false;
-                        if (rng == 3 || rng == 4)
-                        {
-                            coin+=75;
-                            Love++;
+                        if (!puzzleActive || puzzleWin) return;
+
+                        int startX = 900, startY = 400;
+                        int cellW = 160, cellH = 160;
+                        int spacing = 10;
+                        int clickedRow = -1, clickedCol = -1;
+                        for (int r = 0; r < 3; ++r) {
+                            for (int c = 0; c < 3; ++c) {
+                                int x = startX + c * (cellW + spacing);
+                                int y = startY + r * (cellH + spacing);
+                                QRect rect(x, y, cellW, cellH);
+                                if (rect.contains(pos1)) {
+                                    clickedRow = r;
+                                    clickedCol = c;
+                                    break;
+                                }
+                            }
+                            if (clickedRow != -1) break;
                         }
-                        update();
-                        return;
+                        if (clickedRow == -1) return;
+
+                        if ((abs(clickedRow - emptyRow) + abs(clickedCol - emptyCol)) == 1) {
+                            puzzle[emptyRow][emptyCol] = puzzle[clickedRow][clickedCol];
+                            puzzle[clickedRow][clickedCol] = 0;
+                            emptyRow = clickedRow;
+                            emptyCol = clickedCol;
+                            update();
+
+                            bool win = true;
+                            for (int r = 0; r < 3; ++r) {
+                                for (int c = 0; c < 3; ++c) {
+                                    int expected = r * 3 + c + 1;
+                                    if (expected == 9) expected = 0;  // 最后一个为空格
+                                    if (puzzle[r][c] != expected) {
+                                        win = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (win) {
+                                puzzleWin = true;
+                                puzzleActive = false;
+                                coin += 100;
+                                Love += 2;
+                                update();
+                                QTimer::singleShot(1500, this, [this]() {
+                                    enter_quiz = false;
+                                    have_selected = true;
+                                    puzzleWin = false;
+                                    puzzleActive = false;
+                                    update();
+                                });
+                            }
+                        }
+                    }
+                    else if (gameclass == 5)
+                    {
+                        int btnX = 1150, btnY = 1050, btnW = 200, btnH = 80;
+                        QRect stopBtn(btnX, btnY, btnW, btnH);
+                        if (stopBtn.contains(pos1)) {
+                            if (stopGameActive && !stopGameWin && !stopGameFail) {
+                                stopAndCheck();
+                            }
+                        }
                     }
                 }
                 else
@@ -696,6 +1285,13 @@ protected:
                         update();
                         return ;
                     }
+                    if (isPointOnCatty(pos1))
+                    {
+                        hat = (hat + 1) % 4;
+                        while (!is_bought_hat[hat]) hat = (hat + 1) % 4;
+                        update();
+                        return;
+                    }
                     if (isPointOnCloseEnd(pos1))
                     {
                         ended = false;
@@ -707,6 +1303,12 @@ protected:
                         desc_page = false;
                         update();
                         return ;
+                    }
+                    if (isPointOnDecoration(pos1))
+                    {
+                        enter_decoration = true;
+                        update();
+                        return;
                     }
                     if (isPointOnWaterBowl(pos1))
                     {
@@ -749,7 +1351,7 @@ protected:
                         {
                             bought_1 = true;
                             coin -= 100;
-                            Love += 3;
+                            Love += 1;
                             update();
                         }
                         else
@@ -766,6 +1368,7 @@ protected:
                         {
                             bought_2 = true;
                             coin -= 300;
+                            Love += 5;
                             update();
                         }
                         else
@@ -782,6 +1385,7 @@ protected:
                         {
                             bought_3 = true;
                             coin -= 500;
+                            Love += 8;
                             update();
                         }
                         else
@@ -798,6 +1402,7 @@ protected:
                         {
                             bought_4 = true;
                             coin -= 1000;
+                            Love += 20;
                             update();
                         }
                         else
@@ -814,6 +1419,7 @@ protected:
                         {
                             bought_5 = true;
                             coin -= 2000;
+                            Love += 50;
                             update();
                         }
                         else
@@ -830,6 +1436,7 @@ protected:
                         {
                             bought_6 = true;
                             coin -= 9999;
+                            Love += 9999;
                             update();
                         }
                         else
@@ -856,15 +1463,23 @@ protected:
                         close();
                         return;
                     }
-                    else if (isPointOnCatty(pos1))
-                    {
-                        ismeow = true;
-                        meowTimer.start(500);
-                        update();
-                    }
                     else if (isPointOnQuiz(pos1) && !have_selected)
                     {
                         enter_quiz = true;
+                        if (gameclass == 3) {
+                            startGame3();
+                        } else if (gameclass == 4) {
+                            initPuzzle();
+                            puzzleActive = true;
+                            puzzleWin = false;
+                        } else if (gameclass == 5) {
+                            stopGameActive = true;
+                            stopGameWin = false;
+                            stopGameFail = false;
+                            pointerAngle = 0.0;
+                            pointerDirection = 1;
+                            stopGameTimer.start(20);
+                        }
                         update();
                     }
                     else if (isPointOnBed(pos1))
@@ -873,6 +1488,24 @@ protected:
                         nightTimer.start(2000);
                         Day++;
                         rng = QRandomGenerator::global()->bounded(1,6);
+                        gameclass = QRandomGenerator::global()->bounded(1,6);
+                        temprng = QRandomGenerator::global()->bounded(1,4);
+                        stopGameTimer.stop();
+                        stopGameActive = false;
+                        stopGameWin = false;
+                        stopGameFail = false;
+                        pointerAngle = 0.0;
+                        pointerDirection = 1;
+                        seqDisplayTimer.stop();
+                        seqDisplaying = false;
+                        seqPlaying = false;
+                        seqError = false;
+                        seqWin = false;
+                        puzzleActive = false;
+                        puzzleWin = false;
+                        seqCurrentIndex = 0;
+                        seqDisplayStep = 0;
+                        seqCurrentDisplayNumber = -1;
                         have_selected = false;
                         if (rng >= 4 && !bought_3) Love--;
                         if (rng == 2 && bought_2) Love++;
@@ -897,6 +1530,7 @@ protected:
                         enter_shop = true;
                         update();
                     }
+                    isPointOnCatty(pos1);
                 }
             }
         }
